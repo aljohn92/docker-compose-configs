@@ -1,0 +1,22 @@
+---
+
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      - PLEX_CLAIM=${PLEX_CLAIM}
+    volumes:
+      - /opt/docker/plex/config:/config
+      - /data/media/movies:/movies:ro
+      - /data/media/tv:/tv:ro
+      - /data/media/music:/music:ro
+      - /data/media/audiobooks:/audiobooks:ro
+      - /data/media/photos:/photos:ro
+    devices:
+      - /dev/dri:/dev/dri # Intel QuickSync
+    restart: unless-stopped
