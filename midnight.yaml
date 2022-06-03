@@ -48,11 +48,11 @@ services:
       - PLEX_CLAIM=${PLEX_CLAIM}
     volumes:
       - /opt/docker/plex/config:/config
-      - /storage/media/movies:/movies:ro
-      - /storage/media/tv:/tv:ro
-      - /storage/media/music:/music:ro
-      - /storage/media/audiobooks:/audiobooks:ro
-      - /storage/media/photos:/photos:ro
+      - /mnt/storage/media/movies:/movies:ro
+      - /mnt/storage/media/tv:/tv:ro
+      - /mnt/storage/media/music:/music:ro
+      - /mnt/storage/media/audiobooks:/audiobooks:ro
+      - /mnt/storage/media/photos:/photos:ro
     devices:
       - /dev/dri:/dev/dri # Intel QuickSync
     restart: unless-stopped
@@ -66,8 +66,8 @@ services:
       - TZ=America/New_York
     volumes:
       - /opt/docker/sabnzbd/config:/config
-      - /storage/downloads/usenet:/downloads/usenet
-      - /storage/downloads/incomplete:/downloads/incomplete
+      - /mnt/storage/downloads/usenet:/downloads/usenet
+      - /mnt/storage/downloads/incomplete:/downloads/incomplete
     ports:
       - 8686:8686
     restart: unless-stopped
