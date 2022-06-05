@@ -80,12 +80,26 @@ services:
     devices:
       - /dev/dri:/dev/dri # Intel QuickSync
     volumes:
-      - /opt/docker/plex/config:/config
+      - /opt/docker/plex:/config
       - /mnt/storage/media/movies:/movies:ro
       - /mnt/storage/media/tv:/tv:ro
       - /mnt/storage/media/music:/music:ro
       - /mnt/storage/media/audiobooks:/audiobooks:ro
       - /mnt/storage/media/photos:/photos:ro
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:develop
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=America/New_York
+    volumes:
+      - /opt/docker/prowlarr:/config
+    ports:
+      - 9696:9696
     restart: unless-stopped
 
   qbittorrent:
@@ -100,12 +114,27 @@ services:
       - TZ=America/New_York
     volumes:
       - /opt/docker/qbittorrent:/config
-      - /mnt/storage/downloads/bittorrent:/storage/downloads/bittorrent
-      - /mnt/storage/downloads/incomplete:/storage/downloads/incomplete
+      - /mnt/data/downloads:/mnt/data/downloads
+
     ports:
       - 8881:8881
       - ${FIREWALL_VPN_INPUT_PORTS}:${FIREWALL_VPN_INPUT_PORTS}     # port forwarding
       - ${FIREWALL_VPN_INPUT_PORTS}:${FIREWALL_VPN_INPUT_PORTS}/udp # port forwarding
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=America/New_York
+    volumes:
+      - /opt/docker/radarr:/config
+      - /mnt/data:/mnt/data/
+    ports:
+      - 7878:7878
     restart: unless-stopped
 
   sabnzbd:
@@ -118,8 +147,7 @@ services:
       - TZ=America/New_York
     volumes:
       - /opt/docker/sabnzbd:/config
-      - /mnt/storage/downloads/usenet:/storage/downloads/usenet
-      - /mnt/storage/downloads/incomplete:/storage/downloads/incomplete
+      - /mnt/data/downloads:/mnt/data/downloads
     ports:
       - 8880:8880
     restart: unless-stopped
