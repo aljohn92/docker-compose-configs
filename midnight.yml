@@ -114,8 +114,7 @@ services:
       - TZ=America/New_York
     volumes:
       - /opt/docker/qbittorrent:/config
-      - /mnt/data/downloads:/mnt/data/downloads
-
+      - /mnt/data/downloads:/data/downloads
     ports:
       - 8881:8881
       - ${FIREWALL_VPN_INPUT_PORTS}:${FIREWALL_VPN_INPUT_PORTS}     # port forwarding
@@ -132,7 +131,7 @@ services:
       - TZ=America/New_York
     volumes:
       - /opt/docker/radarr:/config
-      - /mnt/data:/mnt/data/
+      - /mnt/data:/data
     ports:
       - 7878:7878
     restart: unless-stopped
