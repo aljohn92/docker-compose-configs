@@ -160,7 +160,7 @@ services:
       - UMASK=002
       - TZ=America/New_York
     volumes:
-      - /opt/docker/radarr:/config
+      - /opt/docker/sonarr:/config
       - /mnt/data:/data
     ports:
       - 8989:8989
