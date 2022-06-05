@@ -4,48 +4,81 @@ services:
   docker-socket-proxy:
     image: tecnativa/docker-socket-proxy
     container_name: docker-socket-proxy
+    privileged: true
     environment:
       - CONTAINERS=1 # used by diun
-      - IMAGES=1 # used by diun
+      - IMAGES=1     # used by diun
       - SERVICES=1
       - NETWORKS=1
       - TASKS=1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
-      - 2375:2375/tcp
-    privileged: true
+      - 2375:2375
     restart: always
       
   diun:
     image: crazymax/diun:latest
     container_name: diun
     command: serve
-    volumes:
-      - /opt/docker/diun/config:/data
-      - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - TZ=America/New_York
-      - LOG_LEVEL=info
-      - LOG_JSON=false
       - DIUN_WATCH_WORKERS=20
       - DIUN_WATCH_SCHEDULE=0 */6 * * *
       - DIUN_PROVIDERS_DOCKER=true
       - DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://docker-socket-proxy:2375
+      - LOG_LEVEL=info
+      - LOG_JSON=false
+      - TZ=America/New_York
+    volumes:
+      - /opt/docker/diun:/data
+      - /var/run/docker.sock:/var/run/docker.sock
     labels:
       - diun.enable=true
-    depends_on: docker-socket-proxy
-    restart: always
+    restart: unless-stopped
+
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - VPN_SERVICE_PROVIDER=mullvad
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+      - WIREGUARD_ADDRESSES=10.64.136.125/32
+      - FIREWALL_VPN_INPUT_PORTS=${FIREWALL_VPN_INPUT_PORTS}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
+      - SERVER_CITIES=${SERVER_CITIES}
+      - UPDATE_PERIOD=24h
+      - DOT=off
+      - DNS_KEEP_NAMESERVER=on
+      - DNS_ADDRESS=10.10.10.10
+      - HTTPPROXY=on
+      - HTTPPROXY_STEALTH=on
+      - VERSION_INFORMATION=off
+      - TZ=America/New_York
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /opt/docker/gluetun:/gluetun
+    ports:
+      - 8888:8888     # HTTP proxy
+      - 8388:8388     # Shadowsocks
+      - 8388:8388/udp # Shadowsocks
+    restart: unless-stopped
 
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
     network_mode: host
     environment:
-      - PUID=1000
-      - PGID=1000
       - VERSION=docker
       - PLEX_CLAIM=${PLEX_CLAIM}
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+    devices:
+      - /dev/dri:/dev/dri # Intel QuickSync
     volumes:
       - /opt/docker/plex/config:/config
       - /mnt/storage/media/movies:/movies:ro
@@ -53,8 +86,26 @@ services:
       - /mnt/storage/media/music:/music:ro
       - /mnt/storage/media/audiobooks:/audiobooks:ro
       - /mnt/storage/media/photos:/photos:ro
-    devices:
-      - /dev/dri:/dev/dri # Intel QuickSync
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - WEBUI_PORT=8881
+      - DOCKER_MODS=arafatamim/linuxserver-io-mod-vuetorrent
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=America/New_York
+    volumes:
+      - /opt/docker/qbittorrent:/config
+      - /mnt/storage/downloads/bittorrent:/storage/downloads/bittorrent
+      - /mnt/storage/downloads/incomplete:/storage/downloads/incomplete
+    ports:
+      - 8881:8881
+      - ${FIREWALL_VPN_INPUT_PORTS}:${FIREWALL_VPN_INPUT_PORTS}     # port forwarding
+      - ${FIREWALL_VPN_INPUT_PORTS}:${FIREWALL_VPN_INPUT_PORTS}/udp # port forwarding
     restart: unless-stopped
 
   sabnzbd:
@@ -63,11 +114,12 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
+      - UMASK=002
       - TZ=America/New_York
     volumes:
-      - /opt/docker/sabnzbd/config:/config
-      - /mnt/storage/downloads/usenet:/downloads/usenet
-      - /mnt/storage/downloads/incomplete:/downloads/incomplete
+      - /opt/docker/sabnzbd:/config
+      - /mnt/storage/downloads/usenet:/storage/downloads/usenet
+      - /mnt/storage/downloads/incomplete:/storage/downloads/incomplete
     ports:
-      - 8686:8686
+      - 8880:8880
     restart: unless-stopped
