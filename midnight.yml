@@ -146,7 +146,7 @@ services:
       - TZ=America/New_York
     volumes:
       - /opt/docker/sabnzbd:/config
-      - /mnt/data/downloads:/mnt/data/downloads
+      - /mnt/data/downloads:/data/downloads
     ports:
       - 8880:8880
     restart: unless-stopped
